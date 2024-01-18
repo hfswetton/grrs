@@ -11,9 +11,6 @@ struct Cli {
     path: std::path::PathBuf,
 }
 
-#[derive(Debug)]
-struct CustomError(String);
-
 fn main() -> Result<()> {
     let args = Cli::parse();
 
@@ -27,7 +24,7 @@ fn main() -> Result<()> {
         writeln!(handle, "{}", line)
             .with_context(|| String::from("could not write to output buffer"))?;
     }
-    
+
     handle.flush().with_context(|| String::from("could not flush output buffer"))?;
 
     Ok(())
