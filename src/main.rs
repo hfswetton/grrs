@@ -1,35 +1,19 @@
-use clap::Parser;
-use anyhow::{Context, Result};
+use grrs::{Cli, find_matches};
 use std::io::{self, Write};
+use anyhow::{Context, Result};
+use clap::Parser;
 
-/// Search for a pattern in a file and display the lines that contain it.
-#[derive(Parser)]
-struct Cli {
-    /// The pattern to look for
-    pattern: String,
-    /// The path to the file to read
-    path: std::path::PathBuf,
-}
-
-fn find_matches(content: &str, pattern: &str, mut writer: impl std::io::Write) -> Result<()> {
-    for line in content.lines().filter(|l| l.contains(pattern)) {
-        if let Err(error) = writeln!(writer, "{}", line).with_context(|| "could not write to output buffer") {
-            return Err(error);
-        }
-    }
-    Ok(())
-}
 
 fn main() -> Result<()> {
     let args = Cli::parse();
 
-    let content = std::fs::read_to_string(&args.path)
-        .with_context(|| format!("could not read file `{}`", args.path.display()))?;
+    let content = std::fs::read_to_string(args.path())
+        .with_context(|| format!("could not read file `{}`", args.path().display()))?;
 
     let stdout = io::stdout();
     let mut handle = io::BufWriter::new(stdout);
 
-    find_matches(&content, &args.pattern, &mut handle)?;
+    find_matches(&content, args.pattern(), &mut handle)?;
 
     handle.flush().with_context(|| String::from("could not flush output buffer"))?;
 
