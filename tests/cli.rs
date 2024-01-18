@@ -29,3 +29,16 @@ fn find_content_in_file() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+#[test]
+fn error_if_empty_pattern() -> Result<(), Box<dyn std::error::Error>> {
+    let file = assert_fs::NamedTempFile::new("sample.txt")?;
+    file.write_str("A test\nActual content\nMore content\nAnother test")?;
+
+    let mut cmd = Command::cargo_bin("grrs")?;
+    cmd.arg("").arg(file.path());
+    cmd.assert()
+        .failure();
+            
+    Ok(())
+}
