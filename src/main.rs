@@ -11,6 +11,15 @@ struct Cli {
     path: std::path::PathBuf,
 }
 
+fn find_matches(content: &str, pattern: &str, mut writer: impl std::io::Write) -> Result<()> {
+    for line in content.lines().filter(|l| l.contains(pattern)) {
+        if let Err(error) = writeln!(writer, "{}", line).with_context(|| "could not write to output buffer") {
+            return Err(error);
+        }
+    }
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let args = Cli::parse();
 
@@ -20,12 +29,17 @@ fn main() -> Result<()> {
     let stdout = io::stdout();
     let mut handle = io::BufWriter::new(stdout);
 
-    for line in content.lines().filter(|l| l.contains(&args.pattern)) {
-        writeln!(handle, "{}", line)
-            .with_context(|| String::from("could not write to output buffer"))?;
-    }
+    find_matches(&content, &args.pattern, &mut handle)?;
 
     handle.flush().with_context(|| String::from("could not flush output buffer"))?;
 
     Ok(())
+}
+
+
+#[test]
+fn find_a_match() {
+    let mut result = Vec::new();
+    find_matches("lorem ipsum\ndolor sit amet", "lorem", &mut result).expect("error finding matches");
+    assert_eq!(result, b"lorem ipsum\n");
 }
